@@ -246,27 +246,6 @@ An interactive CLI application for AI-powered brainstorming and research using m
 
 ---
 
-## Installation & Setup
-
-```bash
-# Core framework
-pip install agent-framework --pre
-
-# CLI & UI
-pip install typer rich prompt_toolkit
-
-# LLM
-pip install anthropic  # or openai
-
-# Data & Persistence
-pip install pydantic sqlalchemy
-
-# Optional (future)
-pip install pyyaml qdrant-client sentence-transformers
-```
-
----
-
 ## Development Phases
 
 ### Phase 1: MVP (Core Functionality)
@@ -319,7 +298,7 @@ pip install pyyaml qdrant-client sentence-transformers
 
 ## Success Metrics
 
-- User can complete a brainstorming session in < 5 minutes
+- User can complete a brainstorming session in < 30 minutes
 - Agents produce quality score >= 8/10 within 5 iterations
 - Session resumes work 100% reliably
 - Users find results more creative than solo brainstorming
