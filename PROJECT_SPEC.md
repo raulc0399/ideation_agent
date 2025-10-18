@@ -276,26 +276,6 @@ An interactive CLI application for AI-powered brainstorming and research using m
 
 ---
 
-## Open Questions / Future Decisions
-
-1. **LLM Provider:** Claude (Anthropic) vs GPT (OpenAI)?
-   - Recommendation: Start with Claude for best reasoning
-   - Easy to swap later due to framework abstraction
-
-2. **Deployment:** Local-only vs. Server-hosted?
-   - MVP: Local CLI application
-   - Future: Could become web service with API
-
-3. **Configuration:** YAML files vs. Interactive setup?
-   - Recommendation: Start with code-based config
-   - Add YAML when agent personas need customization
-
-4. **Prompt Templates:** Hardcoded vs. User-customizable?
-   - MVP: Hardcoded optimized prompts
-   - Future: Allow users to customize agent personalities
-
----
-
 ## Success Metrics
 
 - User can complete a brainstorming session in < 30 minutes
