@@ -14,7 +14,7 @@ This document tracks design decisions that need to be made before implementation
 
 ---
 
-## 1. Agent Communication Pattern 🔴
+## 1. Agent Communication Pattern 🟢
 
 **Question:** How do agents share context with each other?
 
@@ -29,13 +29,38 @@ This document tracks design decisions that need to be made before implementation
 - C) Explicit message passing between agents
 - D) Shared state object that agents read/write to
 
-**Decision:** [To be decided]
+**Decision:** **Hybrid: Shared State Object (D) + Filtered Context (B)**
 
-**Rationale:** [To be filled]
+**Implementation:**
+```python
+# Structured state for data
+class SessionState(BaseModel):
+    user_request: str
+    plan: Optional[Plan] = None
+    research_findings: List[Finding] = []
+    generated_prompts: List[Prompt] = []
+    evaluations: List[Evaluation] = []
+    iteration: int = 0
+
+# Each agent gets filtered conversation history
+planner_context = [user_message]
+researcher_context = [user_message, planner_response]
+brainstormer_context = [user_message, research_summary]  # NOT full research process
+evaluator_context = [user_message, generated_prompts]    # NOT brainstorming process
+```
+
+**Rationale:**
+- **Structured data in shared state** - Easy to checkpoint, resume, and access specific outputs
+- **Filtered conversation history** - Reduces token costs and prevents irrelevant context from distracting agents
+- **Prevents bias** - Evaluator doesn't see Brainstormer's reasoning process, ensures objective scoring
+- **Type-safe** - Pydantic models provide validation and clear schema
+- **Efficient** - Only pass relevant context to each agent's LLM calls
+- **Flexible** - Can adjust filtering strategy per agent as needed
+- **Framework-friendly** - Works well with MS Agent Framework's state management
 
 ---
 
-## 2. Scoring System Details 🔴
+## 2. Scoring System Details 🟢
 
 **Question:** How should solutions be scored?
 
@@ -51,9 +76,47 @@ This document tracks design decisions that need to be made before implementation
 - C) Hybrid: LLM generates score + human can override
 - D) Comparative ranking instead of absolute scores
 
-**Decision:** [To be decided]
+**Decision:** **Multi-dimensional Scoring (B) with Human Override (C)**
 
-**Rationale:** [To be filled]
+**Implementation:**
+```python
+class Evaluation(BaseModel):
+    prompt_id: str
+    quality: float        # 0-10: General goodness
+    clarity: float        # 0-10: Easy to understand/use
+    specificity: float    # 0-10: Detailed enough
+    overall: float        # Average of dimensions
+    reasoning: str        # Explanation for each score
+    human_override: Optional[float] = None  # User can override overall score
+
+    @property
+    def final_score(self) -> float:
+        return self.human_override if self.human_override else self.overall
+
+# Usage:
+# Autonomous mode: Uses overall score, terminates at >= 9.0
+# Interactive mode: User can override any score
+```
+
+**Scoring Dimensions (MVP):**
+- **Quality** - General excellence, fit for purpose
+- **Clarity** - Easy to understand and actionable
+- **Specificity** - Sufficient detail and precision
+- **Overall** - Average of the three dimensions
+
+**Human Override:**
+- In **interactive mode**: User can override any evaluation after seeing it
+- In **autonomous mode**: Override disabled, uses LLM scores
+- Overrides are saved for future learning (Phase 4 enhancement)
+
+**Rationale:**
+- **Multi-dimensional feedback** - Agents know exactly what to improve
+- **Transparency** - User understands WHY a score was given
+- **Iterative improvement** - Brainstormer can target weak dimensions
+- **Human-in-the-loop** - User maintains control when desired
+- **Flexible** - Can add use-case specific dimensions later
+- **Data-rich** - Better for cost/benefit analysis and analytics
+- **Autonomous-friendly** - Works without human when needed
 
 ---
 
