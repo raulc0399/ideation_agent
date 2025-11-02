@@ -292,6 +292,62 @@ ideation config                  # Configure settings
 
 ---
 
+## 13. Cost Tracking & Monitoring 🔴
+
+**Question:** How should LLM API costs be tracked and displayed?
+
+**Sub-questions:**
+- Track costs per message, per agent, per session, or all of the above?
+- Real-time cost display or summary at the end?
+- How to handle different LLM providers with different pricing?
+- Store cost history for analysis?
+- Set budget limits or warnings?
+
+**Options:**
+- A) Simple: Total session cost displayed at the end
+- B) Detailed: Per-agent cost breakdown shown in real-time
+- C) Comprehensive: Per-message tracking with running total + budget warnings
+- D) Analytics: Full cost history stored in DB with reports and trends
+
+**Display Options:**
+- Show running cost in CLI footer/status bar
+- Cost summary after each agent response
+- Detailed cost report at session end
+- Separate `ideation costs` command to view history
+
+**Tracking Granularity:**
+```
+Session Level:
+  └─ "Total cost: $0.45"
+
+Agent Level:
+  ├─ Planner: $0.05
+  ├─ Researcher: $0.15
+  ├─ Brainstormer: $0.20
+  └─ Evaluator: $0.05
+
+Message Level:
+  ├─ Message 1 (Planner): $0.02 (input: 500 tokens, output: 300 tokens)
+  ├─ Message 2 (Researcher): $0.08 (input: 1200 tokens, output: 800 tokens)
+  └─ ...
+
+LLM Provider Breakdown:
+  ├─ Claude (Sonnet 4.5): $0.30
+  └─ GPT-4: $0.15
+```
+
+**Implementation Considerations:**
+- Need pricing tables for each provider/model
+- Track input tokens vs output tokens (different pricing)
+- Update pricing when providers change rates
+- Exchange rate handling for non-USD pricing?
+
+**Decision:** [To be decided]
+
+**Rationale:** [To be filled]
+
+---
+
 ## Decision Process
 
 When answering each question, we'll follow this process:

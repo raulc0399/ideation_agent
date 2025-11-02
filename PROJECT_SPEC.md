@@ -71,6 +71,14 @@ An interactive CLI application for AI-powered brainstorming and research using m
 - Switch modes during execution
 - Progress tracking across iterations
 
+### 5. Cost Tracking & Monitoring
+- Track LLM API costs per message
+- Display costs per agent and per LLM provider
+- Real-time cost monitoring during session
+- Session-level cost summaries
+- Historical cost analysis
+- Budget warnings and limits
+
 ---
 
 ## Technology Stack
