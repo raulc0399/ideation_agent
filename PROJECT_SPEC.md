@@ -273,6 +273,7 @@ An interactive CLI application for AI-powered brainstorming and research using m
 - [ ] Checkpoint/resume functionality
 - [ ] Multi-session support
 - [ ] Enhanced CLI controls (iteration management)
+- [ ] Basic cost tracking (per-session total)
 
 ### Phase 3: Full Feature Set
 - [ ] Expert agent with conditional activation
@@ -280,12 +281,15 @@ An interactive CLI application for AI-powered brainstorming and research using m
 - [ ] Mode switching (brainstorm/research/combined)
 - [ ] All three use cases implemented
 - [ ] Advanced progress visualization
+- [ ] Detailed cost tracking (per-agent, per-message, per-LLM)
+- [ ] Real-time cost display and budget warnings
 
 ### Phase 4: Long-term Learning
 - [ ] Vector DB integration (Qdrant)
 - [ ] Semantic memory retrieval
 - [ ] Cross-session learning
 - [ ] Quality improvements over time
+- [ ] Cost analytics and historical trends
 
 ---
 
@@ -295,7 +299,12 @@ An interactive CLI application for AI-powered brainstorming and research using m
 - Agents produce quality score >= 8/10 within 5 iterations
 - Session resumes work 100% reliably
 - Users find results more creative than solo brainstorming
-- Zero manual intervention needed after plan approval (autonomous mode)
+- Zero manual intervention needed after plan approval in autonomous mode
+  - User approves plan once, agents run independently until completion
+  - System auto-terminates when quality threshold met or max iterations reached
+  - No additional user input required during execution
+- Cost tracking provides accurate per-message, per-agent, and per-session reporting
+- Users can set and monitor budget limits effectively
 
 ---
 
