@@ -39,11 +39,12 @@ An interactive CLI application for AI-powered brainstorming and research using m
 
 ### 1. Multi-Agent System
 - **Agent Types:**
-  - **Planner** - Generates execution plans for user approval
-  - **Expert** - Clarifies requirements and problem details (optional step)
-  - **Researcher** - Gathers information and best practices
-  - **Brainstormer** - Generates creative solutions and variations
-  - **Evaluator** - Scores solutions for quality assessment
+  - **Planner** (1) - Generates execution plans for user approval
+  - **Expert** (1) - Clarifies requirements and problem details (optional step)
+  - **Researchers** (2-3) - Parallel research on different aspects (trends, materials, techniques)
+  - **Brainstormers** (2-3) - Generate diverse solution variations (minimal, detailed, atmospheric)
+  - **Evaluator** (1) - Scores all solutions for quality assessment
+- **Parallel Execution** - Multiple researchers and brainstormers work simultaneously for diversity and speed
 
 ### 2. Workflow Control
 - **Plan Approval** - Agent generates plan → user reviews → execution begins
@@ -64,12 +65,15 @@ An interactive CLI application for AI-powered brainstorming and research using m
 - Maximum iteration limit (e.g., 10 steps)
 - Early termination if excellent solution found
 
-### 4. Interactive TUI Features
-- View agent conversations and reasoning
+### 4. Interactive Interface
+- **Full process visibility** - Scrollable history showing complete conversation from start
+- **Real-time agent streaming** - Watch multiple agents work in parallel
+- **Stop anytime** - Interrupt agents at any moment to provide feedback
 - Approve/reject generated plans
 - Control agent execution (1 step vs N steps)
 - Switch modes during execution
-- Progress tracking across iterations
+- Progress tracking with timestamps and completion status
+- See individual agent specialties and contributions
 
 ### 5. Cost Tracking & Monitoring
 - Track LLM API costs per message

@@ -120,7 +120,7 @@ class Evaluation(BaseModel):
 
 ---
 
-## 3. CLI Commands & Interface 🔴
+## 3. CLI Commands & Interface 🟢
 
 **Question:** What commands and interface will users interact with?
 
@@ -136,19 +136,169 @@ class Evaluation(BaseModel):
 - C) Interactive mode: Launch into interactive shell
 - D) Combination: Support both CLI commands and interactive mode
 
-**Proposed Commands:**
-```bash
-ideation start [topic]           # Start new brainstorming session
-ideation resume <session-id>     # Resume previous session
-ideation list                    # List all sessions
-ideation show <session-id>       # Show session details
-ideation export <session-id>     # Export results
-ideation config                  # Configure settings
+**Decision:** **Interactive Shell Mode (C) - No CLI commands needed for MVP**
+
+**Agent Pool Architecture:**
+- **1 Planner** - Creates execution plan
+- **1 Expert** - Clarifies requirements (conditional)
+- **Multiple Researchers** (2-3) - Parallel research on different aspects
+- **Multiple Brainstormers** (2-3) - Generate diverse solutions
+- **1 Evaluator** - Scores all outputs
+
+**Interface Design:**
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Ideation Agent - Session abc123                   Step 3/10 [●] Live│
+│ Mode: Autonomous | Cost: $0.23 | Time: 5m 12s                       │
+└─────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━ PROCESS HISTORY (Scrollable) ━━━━━━━━━━━━━━━━━━━━━━━
+
+[USER] 3:45 PM
+Generate prompts for modern villa architecture
+
+[Planner] 3:45 PM | Cost: $0.03
+Created execution plan:
+  1. Expert clarification (style, requirements)
+  2. Parallel research (3 researchers: trends, materials, composition)
+  3. Brainstorm prompts (3 variations: minimal, detailed, atmospheric)
+  4. Evaluate and refine
+✓ Plan approved by user
+
+[Expert] 3:46 PM | Cost: $0.05
+Clarifying requirements...
+Q: What architectural style? Modern minimalist or contemporary?
+Q: Any specific materials to emphasize?
+User response: "Minimalist with lots of glass and concrete"
+✓ Requirements clarified
+
+[Researcher-1: Trends] 3:47 PM | Cost: $0.04
+Researching modern villa trends...
+Found 5 key trends:
+  - Large glass facades for natural light
+  - Open-plan living spaces
+  - Integration with landscape
+  - Sustainable materials
+  - Minimalist clean lines
+✓ Research complete
+
+[Researcher-2: Materials] 3:47 PM | Cost: $0.04  [Parallel]
+Researching glass and concrete in architecture...
+Best practices:
+  - Floor-to-ceiling glass for transparency
+  - Exposed concrete for brutalist aesthetic
+  - Balance warmth with cold materials
+✓ Research complete
+
+[Researcher-3: Composition] 3:48 PM | Cost: $0.05  [Parallel]
+Researching architectural photography composition...
+Key principles:
+  - Golden hour lighting preferred
+  - Eye-level or slightly elevated angles
+  - Emphasis on geometry and lines
+✓ Research complete
+
+━━━━━━━━━━━━━ NOW WORKING (Real-time) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▶ [Brainstormer-1: Minimal] 3:49 PM | Cost: $0.06 (in progress)
+Generating minimalist prompt variation...
+"Modern minimalist villa, floor-to-ceiling glass facade, exposed
+concrete walls, clean geometric lines, integrated with hillside
+landscape, golden hour lighting, architectural photography..."
+
+▶ [Brainstormer-2: Detailed] 3:49 PM | Cost: $0.07 (in progress) [Parallel]
+Generating detailed prompt variation...
+"Ultra-modern luxury villa, 12-meter glass panels, raw concrete
+structure, cantilevered design, infinity pool..."
+
+▶ [Brainstormer-3: Atmospheric] 3:49 PM | Cost: $0.06 (in progress) [Parallel]
+Generating atmospheric prompt variation...
+"Serene modern villa at dusk, warm interior lighting through floor..."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cost Breakdown:
+  Planner: $0.03 | Expert: $0.05 | Researchers: $0.13 | Brainstormers: $0.19
+  Total: $0.40 (Claude Sonnet 4.5)
+
+Active Agents: Brainstormer-1, Brainstormer-2, Brainstormer-3
+Waiting: Evaluator
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ [Enter] Skip  [S] Stop & feedback  [P] Pause  [Q] Quit & save      │
+└─────────────────────────────────────────────────────────────────────┘
+> _
 ```
 
-**Decision:** [To be decided]
+**Key Features:**
+1. **Process History (Scrollable)** - Full conversation log showing everything that happened
+   - Timestamps for each agent response
+   - Cost per message
+   - Completed work clearly marked with ✓
+   - Shows parallel execution with [Parallel] tag
+2. **Multiple Specialized Agents**
+   - 2-3 Researchers with different focuses (trends, materials, composition)
+   - 2-3 Brainstormers generating different variations (minimal, detailed, atmospheric)
+   - Each agent labeled with their specialty
+3. **Real-time "Now Working" Section** - Live streaming of active agents
+   - Shows all parallel agents currently executing
+   - In-progress output streams in real-time
+4. **Comprehensive Cost Monitor** - Per-agent and total cost tracking
+   - Individual agent costs visible in history
+   - Aggregated cost breakdown by agent type
+   - Running total with LLM provider
+5. **Always Interruptible** - Press 'S' at any time to stop and give feedback
+6. **Status Bar** - Quick glance: step, cost, time, active agents
 
-**Rationale:** [To be filled]
+**User Interactions:**
+- **Launch:** Simply run `ideation` → drops into interactive session
+- **Start Session:** Prompted for topic, mode (interactive/autonomous), max iterations
+- **During Execution:**
+  - Press `S` to stop agents and give feedback
+  - Press `Enter` to skip your turn (pass to agents)
+  - Press `P` to pause (agents stop at current step)
+  - Press `C` to continue if paused
+  - Press `Q` to quit and save checkpoint
+- **After Agent Response:**
+  - View results in real-time
+  - Override scores if in interactive mode
+  - Provide feedback/direction
+
+**Feedback Mechanism:**
+```
+[You pressed 'S' - Agents paused]
+
+What would you like to do?
+> 1. Give feedback/direction
+> 2. Override last evaluation
+> 3. Change mode (autonomous ↔ interactive)
+> 4. Adjust max iterations
+> 5. Continue
+
+Your choice: 1
+
+Enter feedback: "Focus more on sustainable materials and passive cooling"
+
+[Feedback saved - Resuming with updated context]
+```
+
+**No CLI Commands for MVP:**
+- Launch directly into interactive mode
+- Session management (list/resume/export) can be added later
+- Focus on the brainstorming experience first
+
+**Rationale:**
+- **User wanted interactive** - No need for CLI command complexity
+- **Full process visibility** - Scrollable history shows entire journey from start
+- **Multiple agents for diversity** - 2-3 researchers/brainstormers generate richer, more varied output
+- **Parallel execution visible** - User sees multiple agents working simultaneously
+- **Stop anytime** - 'S' key immediately pauses agents for feedback
+- **Rich information display** - All relevant data visible: costs per message, timestamps, status, full conversation
+- **Natural workflow** - Feels like watching a team collaborate, not commands
+- **MVP-focused** - Simpler to implement than command infrastructure
+- **Engaging** - Real-time updates keep user connected to agent work
+- **Always in control** - Can interrupt, pause, or redirect at any moment
+- **Transparency** - See what each specialized agent contributed
 
 ---
 
