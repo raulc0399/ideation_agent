@@ -561,6 +561,187 @@ LLM Provider Breakdown:
 
 ---
 
+## 14. Dynamic Agent Configuration & Optimization 🔴
+
+**Question:** Should the system automatically optimize agent count, types, and execution strategy?
+
+**Sub-questions:**
+- How to determine optimal number of researchers and brainstormers?
+- Should agent specializations be dynamic (AI-generated) or predefined?
+- How to decide turn-taking strategy (sequential, parallel, hybrid)?
+- Should configuration adapt based on use case or past performance?
+
+**Options:**
+
+### A) Hardcoded Configuration (Simple)
+```python
+# Fixed configuration per use case
+IMAGE_PROMPTS_CONFIG = {
+    "researchers": 3,  # trends, materials, composition
+    "brainstormers": 3,  # minimal, detailed, atmospheric
+    "parallel": True
+}
+```
+**Pros:**
+- ✅ Simple, predictable
+- ✅ Fast to implement
+- ✅ Easy to debug
+
+**Cons:**
+- ❌ Not adaptive
+- ❌ May be suboptimal for some cases
+
+---
+
+### B) Meta-Agent (AI Designs the Team)
+```python
+# Meta-planner decides configuration
+[Meta-Planner] Analyzing task: "Generate architecture prompts"
+  → Need 3 researchers: trends, materials, lighting
+  → Need 2 brainstormers: minimalist, maximalist
+  → Strategy: Parallel research, sequential brainstorming
+```
+**Pros:**
+- ✅ Adaptive to task complexity
+- ✅ Can discover novel configurations
+- ✅ Uses LLM reasoning
+
+**Cons:**
+- ⚠️ Extra LLM call (cost + latency)
+- ⚠️ Less predictable
+
+---
+
+### C) Rule-Based Optimizer
+```python
+# Rules based on task characteristics
+if task_complexity == "high":
+    researchers = 4
+elif task_complexity == "medium":
+    researchers = 3
+else:
+    researchers = 2
+
+if need_diversity:
+    brainstormers = 3
+    parallel = True
+```
+**Pros:**
+- ✅ Deterministic
+- ✅ No extra LLM calls
+- ✅ Can encode domain knowledge
+
+**Cons:**
+- ⚠️ Requires manual rule tuning
+- ⚠️ May miss edge cases
+
+---
+
+### D) Learning-Based (Phase 4 Enhancement)
+```python
+# Learn from past sessions what works best
+# Store: (task_type, config, quality_score, cost, time)
+# Use historical data to predict optimal config
+
+Past data:
+  architecture_prompts + 3 researchers + 2 brainstormers → 8.5/10, $0.40, 5min
+  architecture_prompts + 2 researchers + 3 brainstormers → 7.0/10, $0.35, 4min
+
+→ Next time: Use 3 researchers + 2 brainstormers
+```
+**Pros:**
+- ✅ Improves over time
+- ✅ Data-driven optimization
+- ✅ Cost-effective
+
+**Cons:**
+- ❌ Requires historical data
+- ❌ Complex implementation
+- ❌ Phase 4 feature
+
+---
+
+### E) Hybrid: Meta-Agent + User Override
+```python
+# Meta-agent proposes configuration
+[Meta-Planner] Proposed team:
+  - 3 Researchers (trends, materials, composition)
+  - 2 Brainstormers (minimal, detailed)
+  - Parallel execution
+
+Approve? (y/n/edit)
+User: edit → "Add one more brainstormer for atmospheric variation"
+
+[Meta-Planner] Updated team:
+  - 3 Researchers
+  - 3 Brainstormers (minimal, detailed, atmospheric)
+```
+**Pros:**
+- ✅ Adaptive + user control
+- ✅ Best of both worlds
+- ✅ Educational for user
+
+**Cons:**
+- ⚠️ Requires user input
+- ⚠️ Slower than autonomous
+
+---
+
+**Turn-Taking Strategies:**
+
+1. **Full Parallel** - All researchers run simultaneously, all brainstormers run simultaneously
+   - Fastest, highest diversity, highest cost
+
+2. **Sequential** - One agent at a time
+   - Slowest, most observable, cheapest
+
+3. **Batched Parallel** - Researchers in parallel, then brainstormers in parallel
+   - Balanced speed and cost
+
+4. **Dynamic** - Meta-agent decides based on task
+   - Most flexible, requires AI orchestration
+
+---
+
+**Decision:** [To be decided]
+
+**Rationale:** [To be filled]
+
+**Recommendation for MVP:**
+- Start with **Option B (Meta-Agent)** for configuration
+- Use **Batched Parallel** execution (research together, brainstorm together)
+- Allow user to see and approve the proposed team
+- Add learning-based optimization in Phase 4
+
+**Example Flow:**
+```
+User: "Generate architecture prompts for modern villa"
+
+[Meta-Planner] Analyzing task...
+  Complexity: Medium
+  Domain: Architecture + Image generation
+
+  Proposed team:
+    ✓ 1 Expert (clarification)
+    ✓ 3 Researchers (parallel)
+      - Trends researcher
+      - Materials researcher
+      - Composition researcher
+    ✓ 3 Brainstormers (parallel)
+      - Minimalist variation
+      - Detailed variation
+      - Atmospheric variation
+    ✓ 1 Evaluator
+
+  Execution: Batched parallel (researchers together, brainstormers together)
+  Estimated cost: $0.40-0.60
+  Estimated time: 5-7 minutes
+
+Approve team? (y/n/edit): _
+```
+
+---
+
 ## Decision Process
 
 When answering each question, we'll follow this process:
