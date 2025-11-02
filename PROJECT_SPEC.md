@@ -28,6 +28,11 @@ An interactive CLI application for AI-powered brainstorming and research using m
    - Idea generation and validation
    - Feasibility assessment
 
+4. **Generate new diffusion models architecture and training methods** - Research and propose novel architectures for diffusion models
+   - Survey latest research papers
+   - Brainstorm innovative architectural changes
+   - Evaluate proposed designs
+
 ---
 
 ## Key Features
@@ -83,7 +88,7 @@ An interactive CLI application for AI-powered brainstorming and research using m
 - **prompt_toolkit** - Interactive prompts and input validation
 
 ### LLM Integration
-- **anthropic** (or openai) - LLM API for agent intelligence
+- **anthropic, openai, gemini** - for each agent, options to choose backend LLMs
 - **pydantic** - Data validation and settings management
 
 ### Memory & Persistence
