@@ -1,7 +1,7 @@
 # Design Decisions & Open Questions
 
 **Created:** 2025-10-18
-**Last Updated:** 2025-10-18
+**Last Updated:** 2025-12-14
 
 This document tracks design decisions that need to be made before implementation. Each question will be answered and documented here as we progress.
 
@@ -302,7 +302,7 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 
 ---
 
-## 4. Configuration & Settings 🔴
+## 4. Configuration & Settings 🟢
 
 **Question:** How should configuration be managed?
 
@@ -318,13 +318,29 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Interactive first-time setup wizard
 - D) Code-based config with optional file overrides
 
-**Decision:** [To be decided]
+**Decision:** **Option B - All in `.env` file**
 
-**Rationale:** [To be filled]
+**Implementation:**
+```
+# .env file
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=...
+
+# Optional defaults (can be overridden in session wizard)
+DEFAULT_MAX_ITERATIONS=10
+DEFAULT_QUALITY_THRESHOLD=8.0
+```
+
+**Rationale:**
+- Simple, single file for all configuration
+- Standard pattern for API keys
+- Easy to set up and understand
+- Session-specific settings (agents, LLM) configured via wizard at session start
 
 ---
 
-## 5. Error Handling & Recovery 🔴
+## 5. Error Handling & Recovery 🟢
 
 **Question:** How to handle errors and failures?
 
@@ -340,13 +356,34 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Fallback to simpler agent behavior
 - D) User prompt: "API failed, retry or abort?"
 
-**Decision:** [To be decided]
+**Decision:** **Hybrid: B + A (Auto-retry, then Fail Fast)**
 
-**Rationale:** [To be filled]
+**Implementation:**
+```python
+# Transient errors (rate limit, timeout):
+#   → Auto-retry 3x with exponential backoff (1s → 2s → 4s)
+#   → Show "Retrying... (attempt 2/3)" in UI
+
+# Persistent errors (3 retries exhausted):
+#   → Save checkpoint automatically
+#   → Show error message
+#   → Offer: "Retry / Skip this agent / Quit & save"
+
+# Infinite loop prevention:
+#   → Cap agent iterations (e.g., 20 internal steps)
+#   → Cap response length
+#   → Timeout per agent (e.g., 60s)
+```
+
+**Rationale:**
+- Auto-retry handles common transient errors (rate limits, timeouts) gracefully
+- User stays in control for persistent failures
+- Checkpoint saves prevent data loss
+- Loop detection prevents runaway costs
 
 ---
 
-## 6. Output Formats & Export 🔴
+## 6. Output Formats & Export 🟢
 
 **Question:** How are results presented and exported?
 
@@ -362,13 +399,36 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Multiple export formats (JSON, MD, HTML)
 - D) Customizable templates for export
 
-**Decision:** [To be decided]
+**Decision:** **Option A - Rich CLI display + JSON export for MVP**
 
-**Rationale:** [To be filled]
+**Implementation:**
+```json
+{
+  "session_id": "abc123",
+  "topic": "modern villa prompts",
+  "outputs": [
+    {"content": "Modern minimalist villa...", "score": 8.5},
+    {"content": "Ultra-modern luxury...", "score": 7.2}
+  ],
+  "cost": {"total": 0.42, "by_agent": {...}},
+  "history": [...]
+}
+```
+
+**Export options:**
+- `final_outputs.json` - Just the results
+- `session.json` - Full history with reasoning
+
+**Rationale:**
+- JSON is structured and machine-readable
+- Can convert JSON → Markdown later with simple script
+- Programmatic access for integrations
+- Complete data preservation
+- Expand to multiple formats (Markdown, HTML) in Phase 2/3
 
 ---
 
-## 7. Parallel Agent Execution 🔴
+## 7. Parallel Agent Execution 🟢
 
 **Question:** How do multiple agents run concurrently?
 
@@ -384,13 +444,33 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Parallel where possible, sequential where needed
 - D) User chooses mode (fast parallel vs. observable sequential)
 
-**Decision:** [To be decided]
+**Decision:** **Option C - Parallel for researchers, sequential for others**
 
-**Rationale:** [To be filled]
+**Implementation:**
+```
+Execution flow:
+1. Planner          → Sequential (single agent)
+2. Expert           → Sequential (single agent, optional)
+3. Researchers      → PARALLEL (2-3 agents run simultaneously)
+4. Brainstormers    → Sequential (builds on research, one at a time)
+5. Evaluator        → Sequential (single agent)
+```
+
+**Technical approach:**
+- Use Python asyncio for true parallel execution
+- Researchers have no dependencies on each other → safe to parallelize
+- Brainstormers may benefit from seeing previous variations → sequential
+- UI shows all parallel agents working simultaneously with streaming output
+
+**Rationale:**
+- Researchers are independent tasks - parallelization speeds up research phase
+- Brainstormers produce more coherent variations when they can see prior work
+- Balanced approach: fast where safe, careful where quality matters
+- User sees parallel work happening in real-time
 
 ---
 
-## 8. Plan Modification by User 🔴
+## 8. Plan Modification by User 🟢
 
 **Question:** How can users modify the generated plan?
 
@@ -406,13 +486,39 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Text editor opens for freeform plan editing
 - D) Structured prompts to add/remove/modify specific steps
 
-**Decision:** [To be decided]
+**Decision:** **Option A + Natural Language Feedback Loop**
 
-**Rationale:** [To be filled]
+**Implementation:**
+```
+[Planner] Proposed plan:
+  1. Expert clarification
+  2. Research (3 agents)
+  3. Brainstorm (3 agents)
+  4. Evaluate
+
+Approve? (y/n): n
+
+What would you like to change?
+> Skip expert clarification, add a researcher for lighting
+
+[Planner] Updated plan:
+  1. Research (4 agents: trends, materials, composition, lighting)
+  2. Brainstorm (3 agents)
+  3. Evaluate
+
+Approve? (y/n): y
+```
+
+**Rationale:**
+- Natural language modification - no complex structured UI needed
+- Planner agent interprets the user's request and regenerates
+- User stays in control without learning a menu system
+- Simple to implement - just another LLM call
+- Phase 2: Add structured menu (Option D) if users want faster edits
 
 ---
 
-## 9. LLM Provider 🔴
+## 9. LLM Provider 🟢
 
 **Question:** Which LLM provider to use?
 
@@ -428,15 +534,43 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Support both, user chooses in config
 - D) Different models for different agents (cheap for simple, expensive for complex)
 
-**Recommendation from previous discussion:** Start with Claude for best reasoning
+**Decision:** **Option C - Multiple providers with session wizard**
 
-**Decision:** [To be decided]
+**Implementation:**
+```
+Session Start Wizard:
+┌─────────────────────────────────────────────┐
+│ New Session Setup                           │
+├─────────────────────────────────────────────┤
+│ Topic: [user input]                         │
+│                                             │
+│ LLM Provider:                               │
+│   ○ Claude (Anthropic)                      │
+│   ○ OpenAI (GPT)                            │
+│   ○ Gemini (Google)                         │
+│                                             │
+│ Agent Configuration:                        │
+│   Researchers: [2-4]                        │
+│   Brainstormers: [2-4]                      │
+│                                             │
+│ Mode: ○ Interactive  ○ Autonomous           │
+└─────────────────────────────────────────────┘
+```
 
-**Rationale:** [To be filled]
+**Supported providers:**
+- Anthropic (Claude Sonnet, Opus)
+- OpenAI (GPT-4, GPT-4o)
+- Google (Gemini Pro)
+
+**Rationale:**
+- User chooses provider based on preference, cost, or API availability
+- Session wizard makes configuration explicit and visible
+- Agent count configurable per session based on task complexity
+- Single provider per session for consistency (no mixing)
 
 ---
 
-## 10. Deployment Model 🔴
+## 10. Deployment Model 🟢
 
 **Question:** How will the application be deployed?
 
@@ -451,15 +585,31 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Client-server architecture (CLI client, API server)
 - D) Web app + API (future evolution)
 
-**Recommendation from previous discussion:** MVP = Local CLI application
+**Decision:** **Option A - Local CLI application**
 
-**Decision:** [To be decided]
+**Implementation:**
+```
+Installation: pip install ideation-agent
+Usage: ideation
 
-**Rationale:** [To be filled]
+State storage:
+  ~/.ideation/
+    ├── config.env          # API keys
+    ├── sessions.db         # SQLite database
+    ├── checkpoints/        # Session checkpoints
+    └── exports/            # Exported JSON files
+```
+
+**Rationale:**
+- Simplest deployment model for MVP
+- No server infrastructure needed
+- All data stays local (privacy)
+- Single-user by design
+- Can evolve to client-server in future if needed
 
 ---
 
-## 11. Configuration Management 🔴
+## 11. Configuration Management 🟢
 
 **Question:** YAML files vs. Interactive setup vs. Code-based?
 
@@ -474,15 +624,37 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Interactive first-time setup wizard → generates config
 - D) Hybrid: Defaults in code, overrides in YAML
 
-**Recommendation from previous discussion:** Start with code-based config, add YAML when needed
+**Decision:** **Option B - Config files (YAML)**
 
-**Decision:** [To be decided]
+**Implementation:**
+```yaml
+# ~/.ideation/config.yaml
+defaults:
+  max_iterations: 10
+  quality_threshold: 8.0
+  default_provider: claude
 
-**Rationale:** [To be filled]
+agents:
+  planner:
+    model: claude-sonnet
+  researcher:
+    model: claude-sonnet
+  brainstormer:
+    model: claude-sonnet
+  evaluator:
+    model: claude-sonnet
+```
+
+**Rationale:**
+- YAML is human-readable and easy to edit
+- Separates configuration from code
+- Users can customize without touching source
+- Version controllable alongside project
+- Can ship sensible defaults, users override as needed
 
 ---
 
-## 12. Prompt Templates 🔴
+## 12. Prompt Templates 🟢
 
 **Question:** Should prompt templates be hardcoded or user-customizable?
 
@@ -497,15 +669,48 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Database stored (dynamic updates)
 - D) Hybrid: Defaults in code, user overrides in files
 
-**Recommendation from previous discussion:** MVP = Hardcoded optimized prompts, Future = Allow customization
+**Decision:** **Option B - External config files**
 
-**Decision:** [To be decided]
+**Implementation:**
+```yaml
+# ~/.ideation/prompts.yaml
+planner:
+  system: |
+    You are a planning agent. Given a user's brainstorming request,
+    create a structured execution plan with research and brainstorming phases.
+    ...
 
-**Rationale:** [To be filled]
+researcher:
+  system: |
+    You are a research agent specializing in {specialty}.
+    Your goal is to find relevant information, best practices, and examples.
+    ...
+
+brainstormer:
+  system: |
+    You are a creative brainstorming agent.
+    Generate diverse, high-quality solutions based on the research provided.
+    ...
+
+evaluator:
+  system: |
+    You are an evaluation agent. Score each solution on:
+    - Quality (0-10)
+    - Clarity (0-10)
+    - Specificity (0-10)
+    ...
+```
+
+**Rationale:**
+- Prompts are easily editable without code changes
+- Users can customize agent personalities
+- Can version control prompts separately
+- Ship optimized defaults, allow power users to override
+- Consistent with #11 (config in files)
 
 ---
 
-## 13. Cost Tracking & Monitoring 🔴
+## 13. Cost Tracking & Monitoring 🟢
 
 **Question:** How should LLM API costs be tracked and displayed?
 
@@ -522,46 +727,44 @@ Enter feedback: "Focus more on sustainable materials and passive cooling"
 - C) Comprehensive: Per-message tracking with running total + budget warnings
 - D) Analytics: Full cost history stored in DB with reports and trends
 
-**Display Options:**
-- Show running cost in CLI footer/status bar
-- Cost summary after each agent response
-- Detailed cost report at session end
-- Separate `ideation costs` command to view history
+**Decision:** **Option B - Per-session and per-agent cost tracking**
 
-**Tracking Granularity:**
+**Implementation:**
 ```
-Session Level:
-  └─ "Total cost: $0.45"
+Status bar (always visible):
+┌─────────────────────────────────────────────────────────────────────┐
+│ Session abc123 | Step 3/10 | Cost: $0.42 | Time: 5m 12s            │
+└─────────────────────────────────────────────────────────────────────┘
 
-Agent Level:
-  ├─ Planner: $0.05
-  ├─ Researcher: $0.15
-  ├─ Brainstormer: $0.20
-  └─ Evaluator: $0.05
+Per-agent display (in history):
+[Researcher-1: Trends] 3:47 PM | Cost: $0.04
+  Found 5 key trends...
 
-Message Level:
-  ├─ Message 1 (Planner): $0.02 (input: 500 tokens, output: 300 tokens)
-  ├─ Message 2 (Researcher): $0.08 (input: 1200 tokens, output: 800 tokens)
-  └─ ...
-
-LLM Provider Breakdown:
-  ├─ Claude (Sonnet 4.5): $0.30
-  └─ GPT-4: $0.15
+Session end summary:
+━━━━━━━━━━━━━━━ Cost Summary ━━━━━━━━━━━━━━━━━━
+  Planner:      $0.03
+  Researchers:  $0.13 (3 agents)
+  Brainstormers: $0.19 (3 agents)
+  Evaluator:    $0.07
+  ─────────────────────────
+  Total:        $0.42
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Implementation Considerations:**
-- Need pricing tables for each provider/model
-- Track input tokens vs output tokens (different pricing)
-- Update pricing when providers change rates
-- Exchange rate handling for non-USD pricing?
+**Stored in database:**
+- Session ID, agent type, tokens (in/out), cost, timestamp
+- Queryable for historical analysis
 
-**Decision:** [To be decided]
-
-**Rationale:** [To be filled]
+**Rationale:**
+- Real-time visibility keeps user aware of spend
+- Per-agent breakdown helps understand cost drivers
+- Session summary gives clear total
+- Stored history enables future analytics (Phase 4)
+- Not message-level granularity - too noisy for MVP
 
 ---
 
-## 14. Dynamic Agent Configuration & Optimization 🔴
+## 14. Dynamic Agent Configuration & Optimization 🟢
 
 **Question:** Should the system automatically optimize agent count, types, and execution strategy?
 
@@ -572,148 +775,15 @@ LLM Provider Breakdown:
 - Should configuration adapt based on use case or past performance?
 
 **Options:**
+- A) Hardcoded Configuration (fixed per use case)
+- B) Meta-Agent (AI designs the team)
+- C) Rule-Based Optimizer (if/else logic)
+- D) Learning-Based (historical data optimization)
+- E) Hybrid: Meta-Agent + User Override
 
-### A) Hardcoded Configuration (Simple)
-```python
-# Fixed configuration per use case
-IMAGE_PROMPTS_CONFIG = {
-    "researchers": 3,  # trends, materials, composition
-    "brainstormers": 3,  # minimal, detailed, atmospheric
-    "parallel": True
-}
-```
-**Pros:**
-- ✅ Simple, predictable
-- ✅ Fast to implement
-- ✅ Easy to debug
+**Decision:** **Option E - Meta-Agent proposes team, user can modify**
 
-**Cons:**
-- ❌ Not adaptive
-- ❌ May be suboptimal for some cases
-
----
-
-### B) Meta-Agent (AI Designs the Team)
-```python
-# Meta-planner decides configuration
-[Meta-Planner] Analyzing task: "Generate architecture prompts"
-  → Need 3 researchers: trends, materials, lighting
-  → Need 2 brainstormers: minimalist, maximalist
-  → Strategy: Parallel research, sequential brainstorming
-```
-**Pros:**
-- ✅ Adaptive to task complexity
-- ✅ Can discover novel configurations
-- ✅ Uses LLM reasoning
-
-**Cons:**
-- ⚠️ Extra LLM call (cost + latency)
-- ⚠️ Less predictable
-
----
-
-### C) Rule-Based Optimizer
-```python
-# Rules based on task characteristics
-if task_complexity == "high":
-    researchers = 4
-elif task_complexity == "medium":
-    researchers = 3
-else:
-    researchers = 2
-
-if need_diversity:
-    brainstormers = 3
-    parallel = True
-```
-**Pros:**
-- ✅ Deterministic
-- ✅ No extra LLM calls
-- ✅ Can encode domain knowledge
-
-**Cons:**
-- ⚠️ Requires manual rule tuning
-- ⚠️ May miss edge cases
-
----
-
-### D) Learning-Based (Phase 4 Enhancement)
-```python
-# Learn from past sessions what works best
-# Store: (task_type, config, quality_score, cost, time)
-# Use historical data to predict optimal config
-
-Past data:
-  architecture_prompts + 3 researchers + 2 brainstormers → 8.5/10, $0.40, 5min
-  architecture_prompts + 2 researchers + 3 brainstormers → 7.0/10, $0.35, 4min
-
-→ Next time: Use 3 researchers + 2 brainstormers
-```
-**Pros:**
-- ✅ Improves over time
-- ✅ Data-driven optimization
-- ✅ Cost-effective
-
-**Cons:**
-- ❌ Requires historical data
-- ❌ Complex implementation
-- ❌ Phase 4 feature
-
----
-
-### E) Hybrid: Meta-Agent + User Override
-```python
-# Meta-agent proposes configuration
-[Meta-Planner] Proposed team:
-  - 3 Researchers (trends, materials, composition)
-  - 2 Brainstormers (minimal, detailed)
-  - Parallel execution
-
-Approve? (y/n/edit)
-User: edit → "Add one more brainstormer for atmospheric variation"
-
-[Meta-Planner] Updated team:
-  - 3 Researchers
-  - 3 Brainstormers (minimal, detailed, atmospheric)
-```
-**Pros:**
-- ✅ Adaptive + user control
-- ✅ Best of both worlds
-- ✅ Educational for user
-
-**Cons:**
-- ⚠️ Requires user input
-- ⚠️ Slower than autonomous
-
----
-
-**Turn-Taking Strategies:**
-
-1. **Full Parallel** - All researchers run simultaneously, all brainstormers run simultaneously
-   - Fastest, highest diversity, highest cost
-
-2. **Sequential** - One agent at a time
-   - Slowest, most observable, cheapest
-
-3. **Batched Parallel** - Researchers in parallel, then brainstormers in parallel
-   - Balanced speed and cost
-
-4. **Dynamic** - Meta-agent decides based on task
-   - Most flexible, requires AI orchestration
-
----
-
-**Decision:** [To be decided]
-
-**Rationale:** [To be filled]
-
-**Recommendation for MVP:**
-- Start with **Option B (Meta-Agent)** for configuration
-- Use **Batched Parallel** execution (research together, brainstorm together)
-- Allow user to see and approve the proposed team
-- Add learning-based optimization in Phase 4
-
-**Example Flow:**
+**Implementation:**
 ```
 User: "Generate architecture prompts for modern villa"
 
@@ -727,18 +797,33 @@ User: "Generate architecture prompts for modern villa"
       - Trends researcher
       - Materials researcher
       - Composition researcher
-    ✓ 3 Brainstormers (parallel)
+    ✓ 2 Brainstormers (sequential)
       - Minimalist variation
       - Detailed variation
-      - Atmospheric variation
     ✓ 1 Evaluator
 
-  Execution: Batched parallel (researchers together, brainstormers together)
   Estimated cost: $0.40-0.60
   Estimated time: 5-7 minutes
 
-Approve team? (y/n/edit): _
+Approve team? (y/n/edit): edit
+What would you like to change?
+> Add an atmospheric brainstormer
+
+[Meta-Planner] Updated team:
+  ✓ 3 Brainstormers (sequential)
+    - Minimalist variation
+    - Detailed variation
+    - Atmospheric variation
+
+Approve team? (y/n/edit): y
 ```
+
+**Rationale:**
+- AI proposes optimal configuration based on task analysis
+- User maintains control and can adjust
+- Educational - user learns what configurations work
+- Flexible for different task complexities
+- Phase 4: Add learning-based optimization from historical data
 
 ---
 
